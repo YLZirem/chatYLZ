@@ -1,59 +1,136 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesajlaşma Uygulaması</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>ChatY</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+      padding: 20px;
+    }
+
+    #messages {
+      max-width: 600px;
+      margin: 0 auto;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      background: white;
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 8px 12px;
+      margin: 6px;
+      border-radius: 10px;
+      clear: both;
+      word-wrap: break-word;
+      display: inline-block;
+    }
+
+    .my-message {
+      background-color: #d1e7dd;
+      float: right;
+      text-align: right;
+    }
+
+    .other-message {
+      background-color: #f8d7da;
+      float: left;
+      text-align: left;
+    }
+
+    #chat-form {
+      text-align: center;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      width: 300px;
+    }
+
+    button {
+      padding: 8px 12px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Mesajlaşma Uygulaması</h1>
-    <div id="messages"></div>
-    <input type="text" id="message" placeholder="Mesajınızı yazın...">
-    <button id="send">Gönder</button>
 
-    <!-- Firebase SDK bağlantısı -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+  <h2 style="text-align:center;">ChatY Uygulaması</h2>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
-            authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
-            databaseURL: "https://mesajlasmaapp-9b4be-default-rtdb.firebaseio.com",
-            projectId: "mesajlasmaapp-9b4be",
-            storageBucket: "mesajlasmaapp-9b4be.firebasestorage.app",
-            messagingSenderId: "365906594912",
-            appId: "1:365906594912:web:8bb5171cb70868dafdc705"
-        };
+  <div id="messages"></div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+  <form id="chat-form">
+    <input type="text" id="username" placeholder="Kullanıcı adınız" required />
+    <input type="text" id="message" placeholder="Mesajınız" required />
+    <button type="submit">Gönder</button>
+  </form>
 
-        const username = prompt("Adınızı giriniz:");
+  <!-- Firebase SDK ve App JS -->
+  <script type="module">
+    // Firebase'den gerekli modülleri import ediyoruz
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
 
-        // Mesaj gönderme
-        document.getElementById("send").addEventListener("click", function() {
-            const message = document.getElementById("message").value;
-            push(ref(db, "messages"), {
-                user: username,
-                text: message
-            });
-            document.getElementById("message").value = ""; 
+    // Firebase yapılandırması (KENDİ config’inle değiştirme!)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
+      authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
+      databaseURL: "https://mesajlasmaapp-9b4be-default-rtdb.firebaseio.com",
+      projectId: "mesajlasmaapp-9b4be",
+      storageBucket: "mesajlasmaapp-9b4be.appspot.com",
+      messagingSenderId: "365906594912",
+      appId: "1:365906594912:web:8bb5171cb70868dafdc705"
+    };
+
+    // Firebase başlatılıyor
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const messagesDiv = document.getElementById("messages");
+    const chatForm = document.getElementById("chat-form");
+    const messageInput = document.getElementById("message");
+    const usernameInput = document.getElementById("username");
+
+    // Mesaj gönderme
+    chatForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const text = messageInput.value.trim();
+      const user = usernameInput.value.trim();
+
+      if (text && user) {
+        push(ref(db, "messages"), {
+          user: user,
+          text: text,
+          timestamp: Date.now()
         });
 
-        // Yeni mesajları dinleme ve ekleme
-        const messagesDiv = document.getElementById("messages");
-        onChildAdded(ref(db, "messages"), function(data) {
-            const msg = data.val();
-            const p = document.createElement("p");
-            p.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
-            messagesDiv.appendChild(p);
-        });
+        messageInput.value = ""; // Gönderimden sonra temizle
+      }
+    });
 
-        <!-- Mesajlar div'inin içinde her mesaj için bir silme butonu ekleyelim -->
-        <div id="messages"></div>
+    // Mesajları dinle ve göster
+    onChildAdded(ref(db, "messages"), function (data) {
+      const msg = data.val();
+      const p = document.createElement("p");
 
-    </script>
+      const currentUser = usernameInput.value.trim();
+      p.classList.add("message");
+
+      if (msg.user === currentUser) {
+        p.classList.add("my-message");
+      } else {
+        p.classList.add("other-message");
+      }
+
+      p.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Otomatik kaydır
+    });
+  </script>
 </body>
 </html>
