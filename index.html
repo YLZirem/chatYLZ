@@ -10,15 +10,25 @@
       padding: 20px;
     }
 
-    #messages {
+    #login, #chat {
       max-width: 600px;
       margin: 0 auto;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
       background: white;
-      padding: 10px;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    #login {
+      display: block;
+    }
+
+    #messages {
       height: 300px;
       overflow-y: scroll;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding: 10px;
     }
 
     .message {
@@ -43,13 +53,9 @@
       text-align: left;
     }
 
-    #chat-form {
-      text-align: center;
-    }
-
     input[type="text"] {
       padding: 8px;
-      width: 300px;
+      width: 70%;
     }
 
     button {
@@ -61,21 +67,27 @@
 
   <h2 style="text-align:center;">ChatY Uygulaması</h2>
 
-  <div id="messages"></div>
+  <!-- Giriş Ekranı -->
+  <div id="login">
+    <h3>Kullanıcı Adınızı Girin</h3>
+    <input type="text" id="login-username" placeholder="örn: irem" required />
+    <button onclick="login()">Sohbete Başla</button>
+  </div>
 
-  <form id="chat-form">
-    <input type="text" id="username" placeholder="Kullanıcı adınız" required />
-    <input type="text" id="message" placeholder="Mesajınız" required />
-    <button type="submit">Gönder</button>
-  </form>
+  <!-- Sohbet Ekranı -->
+  <div id="chat">
+    <div id="messages"></div>
 
-  <!-- Firebase SDK ve App JS -->
+    <form id="chat-form">
+      <input type="text" id="message" placeholder="Mesajınız" required />
+      <button type="submit">Gönder</button>
+    </form>
+  </div>
+
   <script type="module">
-    // Firebase'den gerekli modülleri import ediyoruz
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
 
-    // Firebase yapılandırması (KENDİ config’inle değiştirme!)
     const firebaseConfig = {
       apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
       authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
@@ -86,30 +98,41 @@
       appId: "1:365906594912:web:8bb5171cb70868dafdc705"
     };
 
-    // Firebase başlatılıyor
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+
+    let currentUser = ""; // Giriş yapan kullanıcı adı
 
     const messagesDiv = document.getElementById("messages");
     const chatForm = document.getElementById("chat-form");
     const messageInput = document.getElementById("message");
-    const usernameInput = document.getElementById("username");
+
+    // Kullanıcı giriş fonksiyonu
+    window.login = function () {
+      const usernameInput = document.getElementById("login-username");
+      const username = usernameInput.value.trim();
+
+      if (username !== "") {
+        currentUser = username;
+        document.getElementById("login").style.display = "none";
+        document.getElementById("chat").style.display = "block";
+      }
+    };
 
     // Mesaj gönderme
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault();
 
       const text = messageInput.value.trim();
-      const user = usernameInput.value.trim();
 
-      if (text && user) {
+      if (text && currentUser) {
         push(ref(db, "messages"), {
-          user: user,
+          user: currentUser,
           text: text,
           timestamp: Date.now()
         });
 
-        messageInput.value = ""; // Gönderimden sonra temizle
+        messageInput.value = "";
       }
     });
 
@@ -118,7 +141,6 @@
       const msg = data.val();
       const p = document.createElement("p");
 
-      const currentUser = usernameInput.value.trim();
       p.classList.add("message");
 
       if (msg.user === currentUser) {
@@ -129,7 +151,7 @@
 
       p.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
       messagesDiv.appendChild(p);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Otomatik kaydır
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
 </body>
