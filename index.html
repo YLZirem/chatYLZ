@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesajlaşma Uygulaması</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Mesajlaşma Uygulaması</h1>
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="Mesajınızı yazın...">
+    <button id="send">Gönder</button>
+
+    <!-- Firebase SDK bağlantısı -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
+            authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
+            databaseURL: "https://mesajlasmaapp-9b4be-default-rtdb.firebaseio.com",
+            projectId: "mesajlasmaapp-9b4be",
+            storageBucket: "mesajlasmaapp-9b4be.firebasestorage.app",
+            messagingSenderId: "365906594912",
+            appId: "1:365906594912:web:8bb5171cb70868dafdc705"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const username = prompt("Adınızı giriniz:");
+
+        // Mesaj gönderme
+        document.getElementById("send").addEventListener("click", function() {
+            const message = document.getElementById("message").value;
+            push(ref(db, "messages"), {
+                user: username,
+                text: message
+            });
+            document.getElementById("message").value = ""; 
+        });
+
+        // Yeni mesajları dinleme ve ekleme
+        const messagesDiv = document.getElementById("messages");
+        onChildAdded(ref(db, "messages"), function(data) {
+            const msg = data.val();
+            const p = document.createElement("p");
+            p.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
+            messagesDiv.appendChild(p);
+        });
+    </script>
+</body>
+</html>
