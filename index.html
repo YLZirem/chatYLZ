@@ -32,25 +32,15 @@
     }
 
     .message {
-      max-width: 70%;
+      background-color: #e0e0e0;
       padding: 8px 12px;
-      margin: 6px;
+      margin: 6px 0;
       border-radius: 10px;
-      clear: both;
-      word-wrap: break-word;
-      display: inline-block;
-    }
-
-    .my-message {
-      background-color: #d1e7dd;
-      float: right;
-      text-align: right;
-    }
-
-    .other-message {
-      background-color: #f8d7da;
-      float: left;
+      max-width: 80%;
       text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     input[type="text"] {
@@ -59,7 +49,12 @@
     }
 
     button {
-      padding: 8px 12px;
+      padding: 6px 10px;
+      margin-left: 5px;
+    }
+
+    .msg-text {
+      flex: 1;
     }
   </style>
 </head>
@@ -85,9 +80,11 @@
   </div>
 
   <script type="module">
+    // Firebase'den gerekli fonksiyonları içe aktar
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
 
+    // Firebase yapılandırması
     const firebaseConfig = {
       apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
       authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
@@ -98,10 +95,11 @@
       appId: "1:365906594912:web:8bb5171cb70868dafdc705"
     };
 
+    // Firebase başlat
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let currentUser = ""; // Giriş yapan kullanıcı adı
+    let currentUser = ""; // Giriş yapan kullanıcının adı
 
     const messagesDiv = document.getElementById("messages");
     const chatForm = document.getElementById("chat-form");
@@ -122,7 +120,6 @@
     // Mesaj gönderme
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault();
-
       const text = messageInput.value.trim();
 
       if (text && currentUser) {
@@ -139,18 +136,31 @@
     // Mesajları dinle ve göster
     onChildAdded(ref(db, "messages"), function (data) {
       const msg = data.val();
-      const p = document.createElement("p");
+      const key = data.key;
 
-      p.classList.add("message");
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message");
+      msgDiv.setAttribute("data-id", key);
 
+      const msgText = document.createElement("span");
+      msgText.classList.add("msg-text");
+      msgText.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
+      msgDiv.appendChild(msgText);
+
+      // Silme butonu sadece kendi mesajı için
       if (msg.user === currentUser) {
-        p.classList.add("my-message");
-      } else {
-        p.classList.add("other-message");
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Sil";
+        delBtn.onclick = function () {
+          if (confirm("Bu mesajı silmek istediğine emin misin?")) {
+            remove(ref(db, "messages/" + key));
+            msgDiv.remove(); // Ekrandan da sil
+          }
+        };
+        msgDiv.appendChild(delBtn);
       }
 
-      p.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
-      messagesDiv.appendChild(p);
+      messagesDiv.appendChild(msgDiv);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
