@@ -1,168 +1,202 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>ChatY</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f1f1f1;
-      padding: 20px;
-    }
-
-    #login, #chat {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      display: none;
-    }
-
-    #login {
-      display: block;
-    }
-
-    #messages {
-      height: 300px;
-      overflow-y: scroll;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-      padding: 10px;
-    }
-
-    .message {
-      background-color: #e0e0e0;
-      padding: 8px 12px;
-      margin: 6px 0;
-      border-radius: 10px;
-      max-width: 80%;
-      text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    input[type="text"] {
-      padding: 8px;
-      width: 70%;
-    }
-
-    button {
-      padding: 6px 10px;
-      margin-left: 5px;
-    }
-
-    .msg-text {
-      flex: 1;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Doğum Günün Kutlu Olsun</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    background: #0f1724;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
+  }
+  h1 {
+    margin-top: 50px;
+    font-size: 2.5rem;
+  }
+  button {
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background-color: #ff66c4;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    display: block;
+    z-index: 10;
+    position: relative;
+  }
+  #confettiCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 5;
+  }
+  /* Galeri stili */
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px auto;
+    max-width: 900px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+  }
+  .gallery.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .gallery img {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: transform 0.3s;
+  }
+  .gallery img:hover {
+    transform: scale(1.05);
+  }
+  /* Lightbox stil */
+  #lightbox {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  #lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+    box-shadow: 0 0 15px #fff;
+  }
+</style>
 </head>
 <body>
 
-  <h2 style="text-align:center;">ChatY Uygulaması</h2>
+<h1>🎉 Merhaba Öykü! 🎉</h1>
+<p>Doğum günün kutlu olsun! Butona basınca sürpriz başlıyor 🎶</p>
+<button id="startBtn">Kutlamayı Başlat</button>
 
-  <!-- Giriş Ekranı -->
-  <div id="login">
-    <h3>Kullanıcı Adınızı Girin</h3>
-    <input type="text" id="login-username" placeholder="örn: irem" required />
-    <button onclick="login()">Sohbete Başla</button>
-  </div>
+<canvas id="confettiCanvas"></canvas>
+<audio id="song" src="https://raw.githubusercontent.com/YLZirem/Deneme/main/sarki.mp3"></audio>
 
-  <!-- Sohbet Ekranı -->
-  <div id="chat">
-    <div id="messages"></div>
+<!-- Fotoğraf galerisi -->
+<div class="gallery" id="gallery">
+  <img src="foto1.jpg" alt="Fotoğraf 1" />
+  <img src="foto2.jpg" alt="Fotoğraf 2" />
+  <img src="foto3.jpg" alt="Fotoğraf 3" />
+  <img src="foto4.jpg" alt="Fotoğraf 4" />
+  <img src="foto5.jpg" alt="Fotoğraf 5" />
+</div>
 
-    <form id="chat-form">
-      <input type="text" id="message" placeholder="Mesajınız" required />
-      <button type="submit">Gönder</button>
-    </form>
-  </div>
+<div id="lightbox" onclick="this.style.display='none'">
+  <img src="" alt="Büyük Görsel" />
+</div>
 
-  <script type="module">
-    // Firebase'den gerekli fonksiyonları içe aktar
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+<script>
+const startBtn = document.getElementById('startBtn');
+const audio = document.getElementById('song');
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+const gallery = document.getElementById('gallery');
 
-    // Firebase yapılandırması
-    const firebaseConfig = {
-      apiKey: "AIzaSyD5yKLpa_QaXC6HgKG79eF_ap_lXSIR1CA",
-      authDomain: "mesajlasmaapp-9b4be.firebaseapp.com",
-      databaseURL: "https://mesajlasmaapp-9b4be-default-rtdb.firebaseio.com",
-      projectId: "mesajlasmaapp-9b4be",
-      storageBucket: "mesajlasmaapp-9b4be.appspot.com",
-      messagingSenderId: "365906594912",
-      appId: "1:365906594912:web:8bb5171cb70868dafdc705"
-    };
+let W, H;
+let confetti = [];
 
-    // Firebase başlat
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+}
+window.addEventListener('resize', resize);
+resize();
 
-    let currentUser = ""; // Giriş yapan kullanıcının adı
+function randomRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
-    const messagesDiv = document.getElementById("messages");
-    const chatForm = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message");
+function createConfettiParticle() {
+  return {
+    x: Math.random() * W,
+    y: Math.random() * H - H,
+    r: randomRange(5, 10),
+    d: randomRange(10, 50),
+    color: ['#ff66c4','#ffd36b','#7ef9a8','#6ee7ff','#b39cff'][Math.floor(Math.random()*5)],
+    tilt: randomRange(-10, 10),
+    tiltAngle: 0,
+    tiltAngleIncrement: randomRange(0.05, 0.12)
+  };
+}
 
-    // Kullanıcı giriş fonksiyonu
-    window.login = function () {
-      const usernameInput = document.getElementById("login-username");
-      const username = usernameInput.value.trim();
+function initConfetti() {
+  confetti = [];
+  for(let i=0; i<150; i++) {
+    confetti.push(createConfettiParticle());
+  }
+}
 
-      if (username !== "") {
-        currentUser = username;
-        document.getElementById("login").style.display = "none";
-        document.getElementById("chat").style.display = "block";
-      }
-    };
+function drawConfetti() {
+  ctx.clearRect(0, 0, W, H);
+  confetti.forEach(p => {
+    p.tiltAngle += p.tiltAngleIncrement;
+    p.y += (Math.cos(p.d) + 3 + p.r / 2) * 0.5;
+    p.x += Math.sin(p.d);
+    p.tilt = Math.sin(p.tiltAngle) * 15;
 
-    // Mesaj gönderme
-    chatForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const text = messageInput.value.trim();
+    ctx.beginPath();
+    ctx.lineWidth = p.r / 2;
+    ctx.strokeStyle = p.color;
+    ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+    ctx.stroke();
 
-      if (text && currentUser) {
-        push(ref(db, "messages"), {
-          user: currentUser,
-          text: text,
-          timestamp: Date.now()
-        });
+    if(p.y > H) {
+      p.x = Math.random() * W;
+      p.y = -10;
+    }
+  });
+  requestAnimationFrame(drawConfetti);
+}
 
-        messageInput.value = "";
-      }
-    });
+startBtn.addEventListener('click', () => {
+  resize();
+  audio.play().catch(() => {});
+  initConfetti();
+  drawConfetti();
+  startBtn.disabled = true;
+  startBtn.textContent = "Kutlama başladı! 🎉";
 
-    // Mesajları dinle ve göster
-    onChildAdded(ref(db, "messages"), function (data) {
-      const msg = data.val();
-      const key = data.key;
+  // Galeriyi göster
+  gallery.classList.add('show');
+});
 
-      const msgDiv = document.createElement("div");
-      msgDiv.classList.add("message");
-      msgDiv.setAttribute("data-id", key);
+// Galeri için lightbox scripti
+const galleryImages = document.querySelectorAll('.gallery img');
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = lightbox.querySelector('img');
 
-      const msgText = document.createElement("span");
-      msgText.classList.add("msg-text");
-      msgText.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
-      msgDiv.appendChild(msgText);
+galleryImages.forEach(img => {
+  img.addEventListener('click', () => {
+    lightbox.style.display = 'flex';
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+  });
+});
+</script>
 
-      // Silme butonu sadece kendi mesajı için
-      if (msg.user === currentUser) {
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Sil";
-        delBtn.onclick = function () {
-          if (confirm("Bu mesajı silmek istediğine emin misin?")) {
-            remove(ref(db, "messages/" + key));
-            msgDiv.remove(); // Ekrandan da sil
-          }
-        };
-        msgDiv.appendChild(delBtn);
-      }
-
-      messagesDiv.appendChild(msgDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  </script>
 </body>
 </html>
