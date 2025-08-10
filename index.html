@@ -82,16 +82,31 @@
     border-radius: 12px;
     box-shadow: 0 0 15px #fff;
   }
+  /* Mesaj butonu */
+  .message-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #ffd36b;
+    color: #0f1724;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.3s;
+  }
+  .message-btn:hover {
+    background-color: #ffb84d;
+    transform: scale(1.05);
+  }
 </style>
 </head>
 <body>
 
-<h1>🎉 Merhaba Esrasu! 🎉</h1>
+<h1>🎉 Merhaba Esrasuu 🎉</h1>
 <p>Doğum günün kutlu olsun! Butona basınca sürpriz başlıyor 🎶</p>
 <button id="startBtn">Kutlamayı Başlat</button>
 
 <canvas id="confettiCanvas"></canvas>
-<audio id="song" src="https://raw.githubusercontent.com/YLZirem/Deneme/main/sarki.mp3"></audio>
+<audio id="song" src="https://raw.githubusercontent.com/YLZirem/esranurturgut/main/sarki.mp3"></audio>
 
 <!-- Fotoğraf galerisi -->
 <div class="gallery" id="gallery">
@@ -100,6 +115,9 @@
   <img src="Foto3.jpg" alt="Fotoğraf 3" />
   <img src="Foto4.jpg" alt="Fotoğraf 4" />
   <img src="Foto5.jpg" alt="Fotoğraf 5" />
+
+  <!-- Alt kısma mesaj butonu -->
+  <div class="message-btn">💌 Senin İçin Bir Mesaj 💌</div>
 </div>
 
 <div id="lightbox" onclick="this.style.display='none'">
@@ -179,8 +197,6 @@ startBtn.addEventListener('click', () => {
   drawConfetti();
   startBtn.disabled = true;
   startBtn.textContent = "Kutlama başladı! 🎉";
-
-  // Galeriyi göster
   gallery.classList.add('show');
 });
 
@@ -195,6 +211,11 @@ galleryImages.forEach(img => {
     lightboxImg.src = img.src;
     lightboxImg.alt = img.alt;
   });
+});
+
+// Mesaj butonu tıklanınca
+document.querySelector('.message-btn').addEventListener('click', () => {
+  alert("Esrasu, seni çok seviyorum! Doğum günün kutlu olsun! Bak düşün, bugün olmasan dünya bir tık daha sıkıcı olacaktı. Senin varlığın = spontane kahkahalar, plansız maceralar ve “ya iyi ki varsın” dedirten anlar. Seninle gülmek ayrı güzel, sessizce oturmak bile huzurlu. Bazen sadece var olman bile bana iyi geliyor, çünkü sen o “iyi enerji” paketisin. İyi ki kesişti yollarımız, iyi ki bana bu kadar güzel anı biriktirdin. Yeni yaşın sana bolca kahkaha, kalbine cuk oturan mutluluklar ve “of işte bu ya” dedirten anlar getirsin. Senin olduğun dünyada eğlence garanti ama unutma — seninle bu eğlencenin müdavimi benim 🤪 Seni çook seviyorum, nice beraber doğum günü kutlayacağımız yıllara 🥂💛 🎂💖");
 });
 </script>
 
